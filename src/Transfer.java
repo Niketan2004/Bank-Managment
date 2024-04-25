@@ -1,6 +1,5 @@
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Scanner;
 
@@ -20,13 +19,13 @@ public class Transfer {
 
           try {
                // Check if sender's PIN is correct
-               if (!isPinCorrect(con, accountNumber, pin)) {
+               if (!ispinCorrect.isPinCorrect(con, accountNumber, pin)) {
                     System.out.println("Incorrect PIN. Transfer failed.");
                     return;
                }
 
                // Check sender's balance
-               double senderBalance = getBalance(con, accountNumber);
+               double senderBalance = Balance.getUpdatedBalance(con, accountNumber);
                if (senderBalance < amount) {
                     System.out.println("Insufficient balance. Transfer failed!");
                     return;
@@ -59,31 +58,6 @@ public class Transfer {
                     con.rollback();
                } catch (SQLException ex) {
                     System.out.println("Rollback failed: " + ex.getMessage());
-               }
-          }
-     }
-
-     private boolean isPinCorrect(Connection con, Long accountNumber, int pin) throws SQLException {
-
-          try (PreparedStatement ps = con.prepareStatement(Query.pin)) {
-               ps.setLong(1, accountNumber);
-               ps.setInt(2, pin);
-               try (ResultSet rs = ps.executeQuery()) {
-                    return rs.next(); // If there is a row, PIN is correct
-               }
-          }
-     }
-
-     private double getBalance(Connection con, Long accountNumber) throws SQLException {
-
-          try (PreparedStatement ps = con.prepareStatement(Query.balance)) {
-               ps.setLong(1, accountNumber);
-               try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) {
-                         return rs.getDouble("Balance");
-                    } else {
-                         throw new SQLException("Account not found: " + accountNumber);
-                    }
                }
           }
      }

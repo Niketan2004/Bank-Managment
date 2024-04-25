@@ -10,9 +10,7 @@ import java.util.Properties;
 import java.util.Scanner;
 
 public class App {
-    // private static final String username = "DB_Username";
-    // private static final String password = "DB_Password";
-    // private static final String url = "jdbc:mysql://localhost:3306/DB_name";
+   
     static Deposit dp = new Deposit();
     static Transfer tf = new Transfer();
     static Withdraw wd = new Withdraw();
@@ -97,7 +95,8 @@ public class App {
         System.out.println("Enter Your PIN :-");
         int pin = sc.nextInt();
         int c = 0;
-        if (isPinCorrect(con, accountNumber, pin)) {
+        boolean result =ispinCorrect.isPinCorrect(con,accountNumber,pin);
+        if (result) {
 
             while (c != 5) {
                 System.out.println("--------------------------------------------------------");
@@ -138,17 +137,6 @@ public class App {
             }
         }else{
             System.out.println("Your Have Enter Wrong PIN!");
-        }
-    }
-
-    private static boolean isPinCorrect(Connection con, Long accountNumber, int pin) throws SQLException {
-
-        try (PreparedStatement ps = con.prepareStatement(Query.pin)) {
-            ps.setLong(1, accountNumber);
-            ps.setInt(2, pin);
-            try (ResultSet rs = ps.executeQuery()) {
-                return rs.next(); // If there is a row, PIN is correct
-            }
         }
     }
 }

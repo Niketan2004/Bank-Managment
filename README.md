@@ -25,6 +25,8 @@ The Banking Management project is a Java application that simulates basic bankin
 - **Withdraw.java**: Class handling the withdrawal functionality.
 - **Transfer.java**: Class handling the fund transfer functionality.
 - **Query.java**: Class containing SQL queries used by the application.
+- **ispinCorrect.java**: Class that checks if the PIN entered by user is Correct.
+- **Balance.java**: Class that retrieves the balance from user account.
 
 ## Database Schema
 
