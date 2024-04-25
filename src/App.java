@@ -1,20 +1,37 @@
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Properties;
 import java.util.Scanner;
 
 public class App {
-    private static final String username = "root";
-    private static final String password = "Admin@123";
-    private static final String url = "jdbc:mysql://localhost:3306/bank";
+    // private static final String username = "DB_Username";
+    // private static final String password = "DB_Password";
+    // private static final String url = "jdbc:mysql://localhost:3306/DB_name";
     static Deposit dp = new Deposit();
     static Transfer tf = new Transfer();
     static Withdraw wd = new Withdraw();
 
     public static void main(String[] args) throws Exception {
         Scanner sc = new Scanner(System.in);
-        try (Connection con = DriverManager.getConnection(url, username, password)) {
+        Connection con = null;
+        try {
+            Properties prop = new Properties();
+            InputStream ip = new FileInputStream(new File("src//database.properties"));
+            prop.load(ip);
+            final String username = prop.getProperty("db.uname");
+            final String password = prop.getProperty("db.password");
+            final String url = prop.getProperty("db.url");
+            con = DriverManager.getConnection(url, username, password);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+        try {
             int c = 0;
             while (c != 3) {
 
@@ -73,47 +90,64 @@ public class App {
         }
     }
 
-    public static void existingUser(Connection con, Scanner sc) {
+    public static void existingUser(Connection con, Scanner sc) throws SQLException {
         System.out.println("------------------- Welcome User-------------------");
         System.out.println("Enter Your account Number :- ");
         long accountNumber = sc.nextLong();
         System.out.println("Enter Your PIN :-");
         int pin = sc.nextInt();
         int c = 0;
-        while (c != 5) {
-            System.out.println("--------------------------------------------------------");
-            System.out.println();
-            System.out.println("---------------  Select Your Transaction! ------------------");
-            System.out
-                    .println("1.Deposit Amount \n 2.Transfer Amount \n 3.Withdraw Amount \n 4.Check Balance \n 5.Exit");
+        if (isPinCorrect(con, accountNumber, pin)) {
 
-            System.out.println("Enter Your Choice :- ");
+            while (c != 5) {
+                System.out.println("--------------------------------------------------------");
+                System.out.println();
+                System.out.println("---------------  Select Your Transaction! ------------------");
+                System.out
+                        .println(
+                                "1.Deposit Amount \n 2.Transfer Amount \n 3.Withdraw Amount \n 4.Check Balance \n 5.Exit");
 
-            c = sc.nextInt();
-            switch (c) {
-                case 1 -> dp.deposit(con, sc, accountNumber, pin);
-                case 2 -> tf.transfer(con, sc, accountNumber);
-                case 3 -> wd.withdraw(con, sc, accountNumber);
-                case 4 -> {
-                    try {
-                        PreparedStatement ps = con.prepareStatement(Query.balance,
-                                PreparedStatement.RETURN_GENERATED_KEYS);
-                        ps.setLong(1, accountNumber);
-                        ResultSet rs = ps.executeQuery();
-                        if (rs.next()) {
-                            double balance = rs.getDouble("Balance");
-                            System.out.println("Your Balance is:- " + balance);
-                        } else {
-                            System.out.println("Failed to retrieve balance for account number: " + accountNumber);
+                System.out.println("Enter Your Choice :- ");
+
+                c = sc.nextInt();
+                switch (c) {
+                    case 1 -> dp.deposit(con, sc, accountNumber, pin);
+                    case 2 -> tf.transfer(con, sc, accountNumber);
+                    case 3 -> wd.withdraw(con, sc, accountNumber);
+                    case 4 -> {
+                        try {
+                            PreparedStatement ps = con.prepareStatement(Query.balance,
+                                    PreparedStatement.RETURN_GENERATED_KEYS);
+                            ps.setLong(1, accountNumber);
+                            ResultSet rs = ps.executeQuery();
+                            if (rs.next()) {
+                                double balance = rs.getDouble("Balance");
+                                System.out.println("Your Balance is:- " + balance);
+                            } else {
+                                System.out.println("Failed to retrieve balance for account number: " + accountNumber);
+                            }
+
+                        } catch (Exception e) {
+                            System.out.println("Failed to check Balance !!Please try agian Later !");
                         }
-
-                    } catch (Exception e) {
-                        System.out.println("Failed to check Balance !!Please try agian Later !");
                     }
-                }
-                case 5 -> System.out.println("Thanks for Using Our Service!!!");
-                default -> System.out.println("Enter Valid Choice !");
+                    case 5 -> System.out.println("Thanks for Using Our Service!!!");
+                    default -> System.out.println("Enter Valid Choice !");
 
+                }
+            }
+        }else{
+            System.out.println("Your Have Enter Wrong PIN!");
+        }
+    }
+
+    private static boolean isPinCorrect(Connection con, Long accountNumber, int pin) throws SQLException {
+
+        try (PreparedStatement ps = con.prepareStatement(Query.pin)) {
+            ps.setLong(1, accountNumber);
+            ps.setInt(2, pin);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next(); // If there is a row, PIN is correct
             }
         }
     }
